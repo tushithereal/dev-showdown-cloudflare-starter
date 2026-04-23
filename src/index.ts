@@ -1,5 +1,6 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { generateText } from 'ai';
+import { generateObject, generateText } from 'ai';
+import { z } from 'zod';
 
 const INTERACTION_ID_HEADER = 'X-Interaction-Id';
 
@@ -47,6 +48,28 @@ export default {
 				return Response.json({
 					answer: result.text || 'N/A',
 				});
+			}
+			case 'JSON_MODE': {
+				if (!env.DEV_SHOWDOWN_API_KEY) {
+					throw new Error('DEV_SHOWDOWN_API_KEY is required');
+				}
+
+				const workshopLlm = createWorkshopLlm(env.DEV_SHOWDOWN_API_KEY, interactionId);
+				const result = await generateObject({
+					model: workshopLlm.chatModel('deli-4'),
+					system:
+						'You are a product data extractor. Given a human-readable product description, extract the structured data. Return only the extracted fields.',
+					prompt: payload.description,
+					schema: z.object({
+						name: z.string(),
+						price: z.number(),
+						currency: z.string(),
+						category: z.string(),
+						inStock: z.boolean(),
+					}),
+				});
+
+				return Response.json(result.object);
 			}
 			default:
 				return new Response('Solver not found', { status: 404 });
