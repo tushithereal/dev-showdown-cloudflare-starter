@@ -48,11 +48,11 @@ export default {
 					answer: result.text || 'N/A',
 				});
 			}
-				default:
-					return new Response('Solver not found', { status: 404 });
-			}
-		},
-	} satisfies ExportedHandler<Env>;
+			default:
+				return new Response('Solver not found', { status: 404 });
+		}
+	},
+} satisfies ExportedHandler<Env>;
 
 function createWorkshopLlm(apiKey: string, interactionId: string) {
 	return createOpenAICompatible({
